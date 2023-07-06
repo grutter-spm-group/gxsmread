@@ -1,0 +1,27 @@
+# Example channels config file
+#
+# We expect a 'table' for each channel, with the following keys:
+# name: the name we will provide the channel when loaded (as a data variable).
+# conversion_factor: the float value we must multiply our 'raw' data by in order
+#   to convert to physical units. Equivalent to V_to_x_conversion as described
+#   in preprocess.py.
+# units: the physical units it represents.
+#
+# So, for example, we could consider ADC0:
+[ADC0]
+name = "Current"
+conversion_factor = 0.01
+units = "A"
+
+# Or channel ADC1:
+[ADC1]
+name = "Frequency Shift"
+conversion_factor = 1.00
+units = "Hz"
+
+# Note: we will throw an error if the channel of interest does not contain
+# these 3 keys!
+#
+# And ... that's about it.
+
+# Create default_config.py, which holds the metadata-to-conversion info!

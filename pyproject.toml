@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "gxsmread"
+version = "0.1.0"
+description = "Read gxsm data files"
+authors = ["Nick Sullivan <nsulmol@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.9"
+xarray = "^2023.6.0"
+
+
+[tool.poetry.group.parallel.dependencies]
+xarray = {extras = ["parallel"], version = "^2023.6.0"}
+
+
+[tool.poetry.group.test.dependencies]
+pytest = "^7.4.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
