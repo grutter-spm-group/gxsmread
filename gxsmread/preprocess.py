@@ -24,7 +24,7 @@ from . import channel_config  as cc
 GXSM_DATA_VAR = 'FloatField'
 GXSM_DATA_DIFFERENTIAL = 'dz'
 
-GXSM_KEPT_DIMS = ['dimx', 'dimy']
+GXSM_KEPT_COORDS = ['dimx', 'dimy']
 GXSM_KEPT_DATA_VARS = [GXSM_DATA_VAR, GXSM_DATA_DIFFERENTIAL]
 
 # For it to be a proper gxsm file, we expect this attr key and val
@@ -66,11 +66,42 @@ def preprocess(ds: xarray.Dataset,
                                                 use_physical_units,
                                                 allow_convert_from_metadata,
                                                 gxsm_file_attribs)
+    ds = clean_floatfield(ds)
     ds = convert_floatfield(ds, use_physical_units,
                             allow_convert_from_metadata,
                             channels_config_dict)
     if allow_convert_from_metadata:
         ds = clean_up_metadata(ds, [channel_config.name])
+    return ds
+
+
+def clean_floatfield(ds: xarray.Dataset) -> xarray.Dataset:
+    """Remove suprious dimensions from FloatField array.
+
+    The main data array, 'FloatField', has 2 spurious dimensions: 'time' and
+    'value'. This makes the array of the form [1,1,dimx,dimy,...]. This is
+    unnecessary and makes it hard to remove unnecessary meatadata/coords
+    later.
+
+    Thus, this helper just explicitly removes those first 2 dimensions!
+
+    Args:
+        ds: input xarray.Dataset, presumably with original 'FloatField' da.
+
+    Returns:
+        output xarray.Dataset, with the first two dimensions of the data
+        removed.
+    """
+    da = xarray.DataArray(
+        data=ds[GXSM_DATA_VAR].data[0, 0, ...],
+        dims=['dimx', 'dimy'],
+        coords=dict(
+            dimx=ds.dimx,
+            dimy=ds.dimy
+        )
+    )
+
+    ds[GXSM_DATA_VAR] = da
     return ds
 
 
@@ -116,21 +147,8 @@ def convert_floatfield(ds: xarray.Dataset, channel_config: cc.GxsmChannelConfig
     Raises:
         None.
     """
-    # This is a data array
-    converted_data = ds[GXSM_DATA_VAR] * ds[GXSM_DATA_DIFFERENTIAL] \
-        * channel_config.conversion_factor
-
-    # # Create a data array from our data and then assign it as a data var
-    # da = xarray.DataArray(
-    #     data=converted_data,
-    #     dims=['time', 'value', 'dimx', 'dimy'],
-    #     coords=dict(
-    #         dimx=ds.dimx,
-    #         dimy=ds.dimy,
-    #         time=ds.time,
-    #         value=ds.value
-    #     )
-    # )
+    converted_data = (ds[GXSM_DATA_VAR] * ds[GXSM_DATA_DIFFERENTIAL]
+                      * channel_config.conversion_factor)
 
     converted_data.attrs['units'] = channel_config.units
     ds[channel_config.name] = converted_data
@@ -174,26 +192,40 @@ def clean_up_metadata(ds: xarray.Dataset, saved_vars_list: list = []
     Raises:
         None.
     """
-    # TODO: Test calling drop_vars and drop_dims with a list, rather than
-    # one at a time. Is it somehow faster?
-
     # Create whitelist of hard-coded gxsm data vars to skip, as well as
     # desired channel names (in case we run this before or after
     # sanitizing the actual data).
     data_vars_whitelist = GXSM_KEPT_DATA_VARS + saved_vars_list
 
-    # First, move the metadata dims to attrs
-    for dim in ds.dims:
-        if dim not in GXSM_KEPT_DIMS:
-            ds.attrs[dim] = utils.extract_numpy_data(ds[dim].data)
-            ds = ds.drop_dims(dim)
+    # We are creating a new ds from grabbed data (rather than manually
+    # removing vars/coords), since the latter threw strange exceptions.
+    kept_data_vars = {}
+    kept_coords = {}
+    new_attrs = {}
 
-    # Next, the data variables to attrs
+    for coord in ds.coords:
+        if coord not in GXSM_KEPT_COORDS:
+            new_attrs[coord] = utils.extract_numpy_data(ds[coord].data)
+        else:
+            kept_coords[coord] = ds[coord]
+
     for var in ds.data_vars:
         if var not in data_vars_whitelist:
-            ds.attrs[var] = utils.extract_numpy_data(ds[var].data)
-            ds = ds.drop_vars(var)
-    return ds
+            new_attrs[var] = utils.extract_numpy_data(ds[var].data)
+        else:
+            kept_data_vars[var] = ds[var]
+
+    # Ensure our kept data vars have any unused dims removed
+    # for key, var in kept_data_vars.items():
+    #     for dim in var.dims:
+    #         if dim not in kept_dims:
+    #             var = var.drop_vars([dim])
+    #     kept_data_vars[key] = var
+
+    full_attrs = {**ds.attrs, **new_attrs}
+    new_ds = xarray.Dataset(data_vars=kept_data_vars, coords=kept_coords,
+                            attrs=full_attrs)
+    return new_ds
 
 
 def is_gxsm_file(ds: xarray.Dataset) -> bool:
