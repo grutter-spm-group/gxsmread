@@ -20,6 +20,10 @@ xarray = {extras = ["parallel"], version = "^2023.6.0"}
 [tool.poetry.group.test.dependencies]
 pytest = "^7.4.0"
 
+
+[tool.poetry.group.dev.dependencies]
+debugpy = "^1.6.7"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
