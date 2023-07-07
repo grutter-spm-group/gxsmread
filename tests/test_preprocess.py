@@ -1,15 +1,11 @@
 import pytest
 import xarray as xr
-import preprocess as pp
-import channel_config as cc
+import gxsmread.preprocess as pp
+import gxsmread.channel_config as cc
 
 class TestPreProcess:
-    filename = "./data/killburn_r17_LiNi_initial_scan042-M-Xp-Topo.nc"
+    filename = "./tests/data/killburn_r17_LiNi_initial_scan042-M-Xp-Topo.nc"
     ds = xr.open_dataset(filename)
-    # TODO: is this really one file!?!?!?different base names!
-    mf_ds = xr.open_mfdataset(os.path.dirname(filename) + "*.nc")
-
-    # TODO: Test multi-file for all of these too!
 
     @staticmethod
     def assert_dropped_old_dims(ds):
@@ -42,24 +38,29 @@ class TestPreProcess:
         self.assert_drop_old_dims(new_ds)
 
     def test_clean_up_metadata_default_data_vars(self):
-        new_ds = pp.clean_up_metadata(ds)
+        new_ds = pp.clean_up_metadata(self.ds)
         assert len(new_ds.data_vars) == len(pp.GXSM_KEPT_DATA_VARS)
         for var in pp.GXSM_KEPT_DATA_VARS:
             assert var in new_ds.data_vars and var not in new_ds.attrs
         assert len(new_ds.dims) == len(pp.GXSM_KEPT_DIMS)
-        assert len(new_ds.attrs) == len(ds.attrs) + (len(ds.data_vars) -
-                                                     len(pp.GXSM_KEPT_DATA_VARS))
+        assert len(new_ds.attrs) == len(self.ds.attrs) + \
+            (len(self.ds.data_vars) - len(pp.GXSM_KEPT_DATA_VARS))
 
     def test_clean_up_metadata_extra_data_var(self):
         added_var = 'rangex'  # Should exist in any gxsm file
         kept_vars = [pp.GXSM_KEPT_DATA_VARS, added_var]
-        new_ds = pp.clean_up_metadata(ds, [added_var])
+        new_ds = pp.clean_up_metadata(self.ds, [added_var])
         assert len(new_ds.data_vars) == len(kept_vars)
         for var in kept_vars:
             assert var in new_ds.data_vars and var not in new_ds.attrs
         assert len(new_ds.dims) == len(pp.GXSM_KEPT_DIMS)
-        assert len(new_ds.attrs) == len(ds.attrs) + (len(ds.data_vars) -
-                                                     len(kept_vars))
+        assert len(new_ds.attrs) == len(self.ds.attrs) + \
+            (len(self.ds.data_vars) - len(kept_vars))
 
-    def test_is_gxsm_file(self):
-        # TODO: Need a non-gxsm nc file..
+#    def test_is_gxsm_file(self):
+#        # TODO: Need a non-gxsm nc file..
+
+# TODO: is this really one file!?!?!?different base names!
+    #mf_ds = xr.open_mfdataset(os.path.dirname(filename) + "*.nc")
+
+    # TODO: Test multi-file for all of these too!

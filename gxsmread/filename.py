@@ -46,6 +46,7 @@ def get_unique_channel_name(channel: str, scan_direction: str) -> str:
     return channel + GXSM_FILENAME_ATTRIB_SEPARATOR + \
         scan_direction
 
+
 def parse_gxsm_filename(filename: str) -> GxsmFileAttribs:
     """Helper to parse the gxsm filename into components.
 
@@ -55,7 +56,10 @@ def parse_gxsm_filename(filename: str) -> GxsmFileAttribs:
     Returns:
         A GxsmFilename instance, indicating the filename attributes.
     """
-    basename = os.path.splitext(os.path.basename(filename))[0]
+    basename = os.path.basename(os.path.splitext(filename)[0])
     substrs = basename.split(GXSM_FILENAME_ATTRIB_SEPARATOR)
+    is_main_file = len(substrs) == 4
+    if is_main_file:
+        del substrs[1]  # Remove "-M-" from substrs
     return GxsmFileAttribs(substrs[0], substrs[2], substrs[1],
-                           len(substrs == 4))
+                           is_main_file)

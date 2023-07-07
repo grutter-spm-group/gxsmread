@@ -9,6 +9,8 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = ">=3.9"
 xarray = "^2023.6.0"
+toml = "^0.10.2"
+netcdf4 = "^1.6.4"
 
 
 [tool.poetry.group.parallel.dependencies]

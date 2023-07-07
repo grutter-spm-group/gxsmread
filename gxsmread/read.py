@@ -17,8 +17,8 @@ Basic usage:
 import xarray
 from pathlib import Path
 from functools import partial
-import channel_config as cc
-from preprocess import preprocess
+from . import channel_config as cc
+from . import preprocess
 
 
 def open_mfdataset(paths: str | list[str | Path],
@@ -65,7 +65,8 @@ def open_mfdataset(paths: str | list[str | Path],
         in the filepath.
     """
     channels_config_dict = cc.load_channels_config_dict(channels_config_path)
-    partial_func = partial(preprocess, use_physical_units=use_physical_units,
+    partial_func = partial(preprocess.preprocess,
+                           use_physical_units=use_physical_units,
                            allow_convert_from_metadata=allow_convert_from_metadata,
                            channels_config_dict=channels_config_dict)
     return xarray.open_mfdataset(paths, preprocess=partial_func, **kwargs)

@@ -14,8 +14,8 @@ from the class documentation.
 from dataclasses import dataclass
 import toml
 import xarray
-from utils import extract_numpy_data
-from filename import GxsmFileAttribs, get_unique_channel_name
+from . import utils
+from . import filename as fn
 
 # Hard-coded conversion info that may exist in the metadata
 # TODO: investigate if other params are stored (e.g. dHertz2V)
@@ -33,7 +33,7 @@ DEFAULT_UNITS = 'raw'
 DEFAULT_CONVERSION_FACTOR = 1.0
 
 
-@dataclass(init=False)
+@dataclass
 class GxsmChannelConfig:
     """Class holds the attribs to convert to 'physical' units.
 
@@ -86,75 +86,85 @@ class GxsmChannelConfig:
     conversion_factor: float
     units: str
 
-    def __init__(self, channels_config_dict: dict | None, ds: xarray.Dataset,
-                 file_attribs: GxsmFileAttribs, use_physical_units: bool,
-                 allow_convert_from_metadata: bool):
-        """Create GxsmChannelConfig from input data.
 
-        This contains the complicated 'config' setup logic. Read carefully!
+def CreateGxsmChannelConfig(channels_config_dict: dict | None,
+                            ds: xarray.Dataset,
+                            file_attribs: fn.GxsmFileAttribs,
+                            use_physical_units: bool,
+                            allow_convert_from_metadata: bool
+                            ) -> GxsmChannelConfig:
+    """Create GxsmChannelConfig from input data.
 
-        Args:
-            channels_config_dict: a dict containing gxsm channel configuration
-                data (some subset of these attributes) for each channel of
-                interest.
-            ds: the Dataset instance associated with this channel, used to
-                extract metadata (if necessary)
-            file_attribs: Gxsm file attributes, for easy access to 'channel'
-                name.
-            use_physical_units: whether or not to record the data in physical
-                units. If true, we require 'conversion_factor'  and 'units'
-                to exist (see optional exception below). Else, 'units' will be
-                'raw' and 'conversion_factor' '1.0'.
-            allow_convert_from_metadata: for some channels, there are hardcoded
-                gxsm metadata attributes that contain the V-to-units conversion.
-                If this attribute is true and toml_dict *does not contain* a
-                conversion_factor, we will try to find a suitable conversion
-                from the metadata.
+    This contains the complicated 'config' setup logic. Read carefully!
 
-        Raises:
-            - KeyError if a key is missing from the channel_config_dict (or,
-                if allowing metadata, the metadata attribs)
-            - ValueError if the conversion factor provided / read is 0!
-        """
-        d = channels_config_dict
-        c = file_attribs.channel
-        MAP = GXSM_CHANNEL_METADATA_DICT
+    Args:
+        channels_config_dict: a dict containing gxsm channel configuration
+            data (some subset of these attributes) for each channel of
+            interest.
+        ds: the Dataset instance associated with this channel, used to
+            extract metadata (if necessary)
+        file_attribs: Gxsm file attributes, for easy access to 'channel'
+            name.
+        use_physical_units: whether or not to record the data in physical
+            units. If true, we require 'conversion_factor'  and 'units'
+            to exist (see optional exception below). Else, 'units' will be
+            'raw' and 'conversion_factor' '1.0'.
+        allow_convert_from_metadata: for some channels, there are hardcoded
+            gxsm metadata attributes that contain the V-to-units conversion.
+            If this attribute is true and toml_dict *does not contain* a
+            conversion_factor, we will try to find a suitable conversion
+            from the metadata.
 
-        # Recall the saved data var name must be unique (can have 2 scans
-        # per channel)
+    Returns:
+        A GxsmChannelConfig instance.
+
+    Raises:
+        - KeyError if a key is missing from the channel_config_dict (or,
+            if allowing metadata, the metadata attribs)
+        - ValueError if the conversion factor provided / read is 0!
+    """
+    d = channels_config_dict
+    c = file_attribs.channel
+    MAP = GXSM_CHANNEL_METADATA_DICT
+
+    # Recall the saved data var name must be unique (can have 2 scans
+    # per channel)
+    try:
+        name = d[c]['name']
+    except (KeyError, TypeError):
+        name = c
+    name = fn.get_unique_channel_name(name, file_attribs.scan_direction)
+
+    # We allow the user to overide topography, but they must input
+    # all parameters themselves
+    if c == GXSM_CHANNEL_TOPO and (not d or GXSM_CHANNEL_TOPO not in d):
+        conversion_factor = GXSM_TOPO_CONVERSION_FACTOR
+        units = GXSM_TOPO_UNITS
+    elif use_physical_units:
+        # If no dict was passed, create an empty one (for code simplicity)
+        d = {} if not d else d
         try:
-            name = d[c].name
-        except (KeyError, TypeError):
-            name = c
-        name = get_unique_channel_name(name, file_attribs.scan_direction)
-
-        # We allow the user to overide topography, but they must input
-        # all parameters themselves
-        if c.lower() == GXSM_CHANNEL_TOPO and GXSM_CHANNEL_TOPO not in d:
-            conversion_factor = GXSM_TOPO_CONVERSION_FACTOR
-            units = GXSM_TOPO_UNITS
-        elif use_physical_units:
-            try:
-                conversion_factor = d[c].conversion_factor
-                units = d[c].units
-            except (KeyError, TypeError) as e:
-                # Because of this, we *must* run this on the original ds
-                # (we are grabbing metadata as data var, where we will be
-                # turning it into an attr).
-                if allow_convert_from_metadata and c in MAP and \
-                        MAP[c]['name'] in ds.data_vars:
-                    conversion_factor = extract_numpy_data(MAP[c].data)
-                    units = MAP[c]['units']
-                    if conversion_factor == 0.0:
-                        raise ValueError('Conversion factor for {} found in \
-                            metadata, but was 0. Cannot continue.')
-                else:
-                    raise e('No conversion factor found for {} (or \
-                        in metadata if permitted).', c)
-        else:
-            conversion_factor = DEFAULT_CONVERSION_FACTOR
-            units = DEFAULT_UNITS
-        return GxsmChannelConfig(name, conversion_factor, units)
+            conversion_factor = d[c]['conversion_factor']
+            units = d[c]['units']
+        except (KeyError) as e:
+            # Because of this, we *must* run this on the original ds
+            # (we are grabbing metadata as data var, where we will be
+            # turning it into an attr).
+            if allow_convert_from_metadata and c in MAP and \
+               MAP[c]['name'] in ds.data_vars:
+                conversion_factor = utils.extract_numpy_data(
+                    ds[MAP[c]['name']].data)
+                units = MAP[c]['units']
+                if conversion_factor == 0.0:
+                    raise ValueError('Conversion factor for {} found in \
+                    metadata, but was 0. Cannot continue.')
+            else:
+                raise type(e)('No conversion factor found for {} (or \
+                in metadata if permitted).', c) from e
+    else:
+        conversion_factor = DEFAULT_CONVERSION_FACTOR
+        units = DEFAULT_UNITS
+    return GxsmChannelConfig(name, conversion_factor, units)
 
 
 def load_channels_config_dict(filename: str) -> dict:

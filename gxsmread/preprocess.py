@@ -15,9 +15,9 @@ as corresponding to a gxsm file!
 """
 
 import xarray
-import filename as fn
-from utils import extract_numpy_data
-from channel_config import GxsmChannelConfig
+from . import filename as fn
+from . import utils
+from . import channel_config  as cc
 
 # Lists the expected gxsm data variables and coords that are *not* metadata and
 # should be kept.
@@ -62,10 +62,10 @@ def preprocess(ds: xarray.Dataset,
     # (but this is the filepath on the device it was first recorded).
     filename = ds.encoding['source']
     gxsm_file_attribs = fn.parse_gxsm_filename(filename)
-    channel_config = GxsmChannelConfig(channels_config_dict, ds,
-                                       use_physical_units,
-                                       allow_convert_from_metadata,
-                                       gxsm_file_attribs)
+    channel_config = cc.CreateGxsmChannelConfig(channels_config_dict, ds,
+                                                use_physical_units,
+                                                allow_convert_from_metadata,
+                                                gxsm_file_attribs)
     ds = convert_floatfield(ds, use_physical_units,
                             allow_convert_from_metadata,
                             channels_config_dict)
@@ -74,7 +74,7 @@ def preprocess(ds: xarray.Dataset,
     return ds
 
 
-def convert_floatfield(ds: xarray.Dataset, channel_config: GxsmChannelConfig
+def convert_floatfield(ds: xarray.Dataset, channel_config: cc.GxsmChannelConfig
                        ) -> xarray.Dataset:
     """Convert gxsm file 'FloatField' variable to 'raw' or 'physical' data.
 
@@ -116,23 +116,27 @@ def convert_floatfield(ds: xarray.Dataset, channel_config: GxsmChannelConfig
     Raises:
         None.
     """
-    converted_data = ds[GXSM_DATA_VAR].data * ds[GXSM_DATA_DIFFERENTIAL].data \
+    # This is a data array
+    converted_data = ds[GXSM_DATA_VAR] * ds[GXSM_DATA_DIFFERENTIAL] \
         * channel_config.conversion_factor
 
-    # Create a data array from our data and then assign it as a data var
-    da = xarray.DataArray(
-        data=converted_data,
-        dims=['dimx', 'dimy'],
-        coords=dict(
-            dimx=ds.dimx,
-            dimy=ds.dimy
-        )
-    )
-    da.attrs['units'] = channel_config.units
-    ds[channel_config.name] = da
+    # # Create a data array from our data and then assign it as a data var
+    # da = xarray.DataArray(
+    #     data=converted_data,
+    #     dims=['time', 'value', 'dimx', 'dimy'],
+    #     coords=dict(
+    #         dimx=ds.dimx,
+    #         dimy=ds.dimy,
+    #         time=ds.time,
+    #         value=ds.value
+    #     )
+    # )
+
+    converted_data.attrs['units'] = channel_config.units
+    ds[channel_config.name] = converted_data
 
     # Delete the original data variables
-    ds = ds.drop_dims(GXSM_KEPT_DATA_VARS)
+    ds = ds.drop_vars(GXSM_KEPT_DATA_VARS)
     return ds
 
 
@@ -181,13 +185,13 @@ def clean_up_metadata(ds: xarray.Dataset, saved_vars_list: list = []
     # First, move the metadata dims to attrs
     for dim in ds.dims:
         if dim not in GXSM_KEPT_DIMS:
-            ds.attrs[dim] = extract_numpy_data(ds[dim].data)
+            ds.attrs[dim] = utils.extract_numpy_data(ds[dim].data)
             ds = ds.drop_dims(dim)
 
     # Next, the data variables to attrs
     for var in ds.data_vars:
         if var not in data_vars_whitelist:
-            ds.attrs[var] = extract_numpy_data(ds[var].data)
+            ds.attrs[var] = utils.extract_numpy_data(ds[var].data)
             ds = ds.drop_vars(var)
     return ds
 
