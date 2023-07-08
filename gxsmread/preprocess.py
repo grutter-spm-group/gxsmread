@@ -34,6 +34,7 @@ GXSM_FORMAT_CHECK = ('Creator', 'gxsm')
 def preprocess(ds: xarray.Dataset,
                use_physical_units: bool,
                allow_convert_from_metadata: bool,
+               simplify_metadata: bool,
                channels_config_dict: dict | None
                ) -> xarray.Dataset:
     """Convert floatfield and (optionally) convert metadata.
@@ -52,6 +53,8 @@ def preprocess(ds: xarray.Dataset,
             gxsm metadata attributes that contain the V-to-units conversion.
             If this attribute is true, we will use the metadata conversion
             as a fallback (i.e. if the config does not contain it).
+        simplify_metadata: whether or not to convert all metadata variables
+            to attributes.
         channels_config_dict: a dict containing gxsm channel configuration data
             (including the V-to-x unit conversion for each channel).
     """
@@ -63,14 +66,12 @@ def preprocess(ds: xarray.Dataset,
     filename = ds.encoding['source']
     gxsm_file_attribs = fn.parse_gxsm_filename(filename)
     channel_config = cc.CreateGxsmChannelConfig(channels_config_dict, ds,
+                                                gxsm_file_attribs,
                                                 use_physical_units,
-                                                allow_convert_from_metadata,
-                                                gxsm_file_attribs)
+                                                allow_convert_from_metadata)
     ds = clean_floatfield(ds)
-    ds = convert_floatfield(ds, use_physical_units,
-                            allow_convert_from_metadata,
-                            channels_config_dict)
-    if allow_convert_from_metadata:
+    ds = convert_floatfield(ds, channel_config)
+    if simplify_metadata:
         ds = clean_up_metadata(ds, [channel_config.name])
     return ds
 
@@ -79,7 +80,7 @@ def clean_floatfield(ds: xarray.Dataset) -> xarray.Dataset:
     """Remove suprious dimensions from FloatField array.
 
     The main data array, 'FloatField', has 2 spurious dimensions: 'time' and
-    'value'. This makes the array of the form [1,1,dimx,dimy,...]. This is
+    'value'. This makes the array of the form [1,1,dimy,dimy,...]. This is
     unnecessary and makes it hard to remove unnecessary meatadata/coords
     later.
 
@@ -94,10 +95,10 @@ def clean_floatfield(ds: xarray.Dataset) -> xarray.Dataset:
     """
     da = xarray.DataArray(
         data=ds[GXSM_DATA_VAR].data[0, 0, ...],
-        dims=['dimx', 'dimy'],
+        dims=['dimy', 'dimx'],
         coords=dict(
-            dimx=ds.dimx,
-            dimy=ds.dimy
+            dimy=ds.dimy,
+            dimx=ds.dimx
         )
     )
 
@@ -205,13 +206,13 @@ def clean_up_metadata(ds: xarray.Dataset, saved_vars_list: list = []
 
     for coord in ds.coords:
         if coord not in GXSM_KEPT_COORDS:
-            new_attrs[coord] = utils.extract_numpy_data(ds[coord].data)
+            new_attrs[coord] = utils.extract_numpy_data(ds[coord].values)
         else:
             kept_coords[coord] = ds[coord]
 
     for var in ds.data_vars:
         if var not in data_vars_whitelist:
-            new_attrs[var] = utils.extract_numpy_data(ds[var].data)
+            new_attrs[var] = utils.extract_numpy_data(ds[var].values)
         else:
             kept_data_vars[var] = ds[var]
 

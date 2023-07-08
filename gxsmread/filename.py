@@ -9,7 +9,8 @@ from dataclasses import dataclass
 import os
 
 GXSM_FILENAME_ATTRIB_SEPARATOR = '-'
-
+GXSM_FORWARD_SCAN_DIR = 'Xp'
+GXSM_BACKWARD_SCAN_DIR = 'Xm'
 
 @dataclass
 class GxsmFileAttribs:
@@ -21,13 +22,14 @@ class GxsmFileAttribs:
     where:
         - $file_base$ is the user-provided filename;
         - '-M-' indicates if it is the 'main file' of the recording (impling it
-            contains the most metadata);
+            contains the most metadata).
         - $scan_direction$ indicates the direction of scan while this data was
-            recorded: Xm == --> (presumably forward), Xp == <-- (presumably backward)
+            recorded: Xp == --> (presumably forward), Xm == <-- (presumably
+            backward).
         - $channel$ indicates the data channel. It will either be 'Topo' for
             topography, or 'ADC#[$extra_stuff$]', indicating the explicit ADC
-            channel it is collecting (these are the input ports of the collection
-            module).
+            channel it is collecting (these are the input ports of the
+            collection module).
         - brackets ([]) indicates an optional parameter.
     """
 
@@ -48,7 +50,7 @@ def get_unique_channel_name(channel: str, scan_direction: str) -> str:
 
 
 def parse_gxsm_filename(filename: str) -> GxsmFileAttribs:
-    """Helper to parse the gxsm filename into components.
+    """Parse the gxsm filename into components.
 
     Args:
         filename: string to parse

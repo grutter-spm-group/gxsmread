@@ -18,13 +18,13 @@ import xarray
 from pathlib import Path
 from functools import partial
 from . import channel_config as cc
-from . import preprocess
+from . import preprocess as pp
 
 
 def open_mfdataset(paths: str | list[str | Path],
                    channels_config_path: str | Path | None = None,
                    use_physical_units: bool = True,
-                   allow_convert_from_metadata: bool = True,
+                   allow_convert_from_metadata: bool = False,
                    simplify_metadata: bool = True, **kwargs
                    ) -> xarray.Dataset:
     """Open multiple files as a single dataset.
@@ -39,6 +39,14 @@ def open_mfdataset(paths: str | list[str | Path],
     attributes are saved as variables rather than attributes (see preprocess.py
     for further explanation). The added options allow the user to choose to
     'fix' these differences.
+
+    Lastly, in order to merge the data, we have to hard-code the following
+    open_mfdataset params:
+        - concat_dim=None: i.e., no concatenation, since each is its own
+            channel.
+        - combine='nested': to allow only merging.
+        - compat='identical': to enforce that we expect all same-named
+            variables to be identical.
 
     Args:
         paths: either a string glob in the form "path/to/my/files/*.nc" or an
@@ -61,21 +69,36 @@ def open_mfdataset(paths: str | list[str | Path],
 
     Returns:
         An xarray.Dataset instance, with each file's data being stored as a data
-        variable named $channel, where $channel is the channel substring
-        in the filepath.
+        variable named $channel$, where $channel$ is the channel substring
+        in the filepath plus the scan direction.
     """
+    # Getting open_mfdataset() args from kwargs if user provided (and setting
+    # our known default, for it to work). Basically, we trust the user to
+    # know what they are doing.
+    combine = kwargs.get('combine', 'nested')
+    compat = kwargs.get('compat', 'identical')
+    join = kwargs.get('join', 'outer')
+
     channels_config_dict = cc.load_channels_config_dict(channels_config_path)
-    partial_func = partial(preprocess.preprocess,
+    partial_func = partial(pp.preprocess,
                            use_physical_units=use_physical_units,
                            allow_convert_from_metadata=allow_convert_from_metadata,
+                           simplify_metadata=simplify_metadata,
                            channels_config_dict=channels_config_dict)
-    return xarray.open_mfdataset(paths, preprocess=partial_func, **kwargs)
+    # Note: in principle, we could use combine='by_coords'. For some reason,
+    # it appears that using this (instead of 'nested') causes the combination
+    # of attributes (metadata) to miss some (presumably, because they only
+    # exist in the main file). For now, sticking with nested. In the future,
+    # we could try both.
+    return xarray.open_mfdataset(paths, preprocess=partial_func,
+                                 concat_dim=None, combine=combine,
+                                 compat=compat, join=join, **kwargs)
 
 
 def open_dataset(filename_or_obj: str | Path,
                  channels_config_path: str | Path | None = None,
                  use_physical_units: bool = True,
-                 allow_convert_from_metadata: bool = True,
+                 allow_convert_from_metadata: bool = False,
                  simplify_metadata: bool = True, **kwargs
                  ) -> xarray.Dataset:
     """Open and decode a dataset from a file or file object.
@@ -83,7 +106,7 @@ def open_dataset(filename_or_obj: str | Path,
     Wrapper on top of xarray.open_dataset(), for handling gxsm nc
     files. It opens an .nc file as a single xarray.Dataset
     instance, with the 'z-data' stored as a data variable with name
-    $channel, where $channel is the channel name for the file.
+    $channel$, where $channel$ is the channel name for the file.
 
     Note that gxsm .nc files contain the raw DAC counter data for each
     channel, rather than phyiscal units. Additionally, many metadata
@@ -111,11 +134,12 @@ def open_dataset(filename_or_obj: str | Path,
 
     Returns:
         An xarray.Dataset instance, with the file's data being stored as a data
-        variable named $channel, where $channel is the channel name for the file
-        in the file structure.
+        variable named $channel$, where $channel$ is the channel name for the
+        file in the file structure.
     """
     channels_config_dict = cc.load_channels_config_dict(channels_config_path)
     ds = xarray.open_dataset(filename_or_obj, **kwargs)
-    return preprocess(ds, use_physical_units=use_physical_units,
-                      allow_convert_from_metadata=allow_convert_from_metadata,
-                      channels_config_dict=channels_config_dict)
+    return pp.preprocess(ds, use_physical_units=use_physical_units,
+                         allow_convert_from_metadata=allow_convert_from_metadata,
+                         simplify_metadata=simplify_metadata,
+                         channels_config_dict=channels_config_dict)

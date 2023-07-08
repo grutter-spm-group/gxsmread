@@ -4,7 +4,7 @@ import numpy as np
 
 
 def extract_numpy_data(arr: np.ndarray):
-    """Helper to extract data from numpy array."""
+    """Extract data from numpy array."""
     if arr.dtype.kind == 'S':  # String
         return arr.tobytes()
     elif len(arr.data.shape) == 0:  # Single value

@@ -153,21 +153,24 @@ def CreateGxsmChannelConfig(channels_config_dict: dict | None,
             if allow_convert_from_metadata and c in MAP and \
                MAP[c]['name'] in ds.data_vars:
                 conversion_factor = utils.extract_numpy_data(
-                    ds[MAP[c]['name']].data)
+                    ds[MAP[c]['name']].values)
                 units = MAP[c]['units']
                 if conversion_factor == 0.0:
                     raise ValueError('Conversion factor for {} found in \
                     metadata, but was 0. Cannot continue.')
             else:
-                raise type(e)('No conversion factor found for {} (or \
-                in metadata if permitted).', c) from e
+                raise type(e)(f'No conversion factor found for {c} (or '
+                              'in metadata if permitted).') from e
     else:
         conversion_factor = DEFAULT_CONVERSION_FACTOR
         units = DEFAULT_UNITS
     return GxsmChannelConfig(name, conversion_factor, units)
 
 
-def load_channels_config_dict(filename: str) -> dict:
-    """Helper to load config dict (currently a toml file)."""
-    with open(filename, 'r') as f:
-        return toml.load(f)
+def load_channels_config_dict(filename: str | None) -> dict:
+    """Load config dict (currently a toml file)."""
+    if filename:
+        with open(filename, 'r') as f:
+            return toml.load(f)
+    else:
+        return None
