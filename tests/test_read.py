@@ -33,15 +33,6 @@ def test_open_dataset():
 
 def test_open_mfdataset():
     # Perform a glob for all files...
-    #topo_filename = "./tests/data/multichannel_file/r19_AuNP_LN084-M-Xp-Topo.nc"
-    #std_ds = xr.open_dataset(topo_filename)
-    # config = cc.GxsmChannelConfig('Topo-Xp', cc.GXSM_TOPO_CONVERSION_FACTOR,
-    #                               cc.GXSM_TOPO_UNITS)
-    # kept_vars = ['Topo-Xp', 'Topo-Xm', 'ADC0mITunnel-Xp', 'ADC0mITunnel-Xm',
-    #              'ADC1-Xp', 'ADC1-Xm', 'ADC2-Xp', 'ADC2-Xm', 'ADC4-Xp',
-    #              'ADC4-Xm']
-    # config = cc.GxsmChannelConfig('Topo-Xp', cc.GXSM_TOPO_CONVERSION_FACTOR,
-    #                               cc.GXSM_TOPO_UNITS)
     mf_filename = "./tests/data/multichannel_file/*.nc"
 
     mf_ds = read.open_mfdataset(mf_filename, channels_config_path=None,
