@@ -11,31 +11,31 @@ gxsm data files are stored in NetCDF3 format, with each channel stored as a sepa
         $file_base$[-M-]-$scan_direction$-$channel$.nc
         
 where:
-    - $file_base$ is the user-provided filename;
-    - '-M-' indicates if it is the 'main file' of the recording (impling it
-        contains the most metadata).
-    - $scan_direction$ indicates the direction of scan while this data was
-        recorded: Xp == --> (presumably forward), Xm == <-- (presumably
-        backward).
-    - $channel$ indicates the data channel. It will either be 'Topo' for
-        topography, or 'ADC#[$extra_stuff$]', indicating the explicit ADC
-        channel it is collecting (these are the input ports of the
-        collection module).
-    - brackets ([]) indicates an optional parameter.
+- $file_base$ is the user-provided filename;
+- '-M-' indicates if it is the 'main file' of the recording (impling it
+    contains the most metadata).
+- $scan_direction$ indicates the direction of scan while this data was
+    recorded: Xp == --> (presumably forward), Xm == <-- (presumably
+    backward).
+- $channel$ indicates the data channel. It will either be 'Topo' for
+    topography, or 'ADC#[$extra_stuff$]', indicating the explicit ADC
+    channel it is collecting (these are the input ports of the
+    collection module).
+- brackets ([]) indicates an optional parameter.
 
 ### Channel Data
 
-For each file, the dimension of interest (called z data from now on) is stored in a data variable 'FloatField'; these are the RAW DAC counter data recorded. Additionally, a data field 'dz' is provided (defining the z differential); to convert to a 'pseudo-unit', we must multiply 'FloatField' by 'dz'. To convert to a physical unit, we must know the voltage-to-unit conversion corresponding to the ADC channel we have recorded.
+For each file, the dimension of interest is stored in a data variable 'FloatField'; these are the RAW DAC counter data recorded. Additionally, a data field 'dz' is provided (defining the z differential); to convert to a 'pseudo-unit', we must multiply 'FloatField' by 'dz'. To convert to a physical unit, we must know the voltage-to-unit conversion corresponding to the ADC channel we have recorded.
 
-gxsm does this because it allows *any*signal to be hooked into its input channels ADC0 - ADC7 (ADC = Analog to Digital Converter). It expects these signals to be a DC voltage, where the voltage level corresponds to a unit of interest. Thus, there is some conversion factor x, converting from DC V to a physical unit of interest.
+gxsm does this because it allows *any* signal to be hooked into its input channels ADC0 - ADC7 (ADC = Analog to Digital Converter). It expects these signals to be a DC voltage, where the voltage level corresponds to a unit of interest. Thus, there is some conversion factor x, converting from DC V to a physical unit of interest.
 
-Since gxsm knows nothing about the signal being fed, it cannot automatically convert it to the experimenter's units! gxsmread will perform these conversions automatically, provided the user includes a configuration file indicating the meaning of each channel of interest. This feature is enabled by default, but can be overriden by setting use_physical_units to False in the associated gxsm.read method.
+Since gxsm knows nothing about the signal being fed, it cannot automatically convert it to the experimenter's units! gxsmread will perform these conversions automatically, provided the user includes a configuration file indicating the meaning of each channel of interest. This feature is enabled by default, but can be overriden by setting $use_physical_units$ to False in the associated gxsm.read method.
 
 ### Metadata
 
-gxsm also stores a large amount of metadata on the experiment performed. To make this metadata even more clear, most of them are stored as data variables as well; this allows additional 'attributes' to be provided to clarify their meaning (e.g. long_name, Units).
+gxsm also stores a large amount of metadata on the experiment performed. To make this metadata even more clear, most of them are stored as data variables as well; this allows additional 'attributes' to be provided to clarify their meaning (e.g. $long_name$, $Units$).
 
-However, this has the effect of creating *many* data variables for a given file, which may confuse the user. To simplify matters, gxsmread will by default convert all metadata variables to metadata attributes. This can be overriden by setting simplify_metadata to False in the associated gxsm.read method.
+However, this has the effect of creating *many* data variables for a given file, which may confuse the user. To simplify matters, gxsmread will by default convert all metadata variables to metadata attributes. This can be overriden by setting $simplify_metadata$ to False in the associated gxsm.read method.
 
 ## gxsmread Overview
 
@@ -71,15 +71,15 @@ Clone this repository and install the dependencies in its pyproject.toml file.
 
 If you are using poetry, you can do the following once in the cloned directory:
 
-'''bash
+``` sh
 poetry install
-'''
+```
 
 ## Basic Usage
 
 To open a single .nc file:
 
-'''python
+``` python
 from gxsmread import read
 [...]
 path_to_file = '/path/to/file/with_filename.nc'
@@ -87,11 +87,12 @@ ds = read.open_dataset(path_to_file, channels_config_path,
                        use_physical_units=True,
                        simplify_metadata=True)
 [...]
-'''python
+
+```
 
 to open a multi-channel file:
 
-'''python
+``` python
 from gxsmread import read
 [...]
 wildcard_path = 'path/to/files/*.nc*'
@@ -99,8 +100,8 @@ ds = read.open_mfdataset(wildcard_path, channels_config_path,
                          use_physical_units=True,
                          simplify_metadata=True)
 [...]
-'''
-
+```
+```
 Note that open_mfdataset() support multi-threaded loading via dask by using the parameter parallel=True. gxsmread's method is a wrapper, and therefore does too.
 
 ## Limitations
