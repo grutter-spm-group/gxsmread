@@ -49,8 +49,25 @@ class TestPreProcess:
     filename = "./tests/data/killburn_r17_LiNi_initial_scan042-M-Xp-Topo.nc"
     ds = xr.open_dataset(filename)
 
+
+    def test_clean_floatfield(self):
+        ds = self.ds
+        new_ds = pp.clean_floatfield(ds.copy(deep=True))
+        assert len(ds[pp.GXSM_DATA_VAR].dims) == 4
+        assert len(new_ds[pp.GXSM_DATA_VAR].dims) == 2
+
+    def test_clean_kept_coords(self):
+        ds = self.ds
+        new_ds = pp.clean_kept_coords(ds.copy(deep=True))
+        for coord in pp.GXSM_KEPT_COORDS:
+            assert ('units' in new_ds[coord].attrs and
+                    new_ds[coord].attrs['units'] == cc.GXSM_TOPO_UNITS)
+            assert (new_ds[coord].values ==
+                    (ds[coord] * cc.GXSM_TOPO_CONVERSION_FACTOR).values).all()
+
     def test_convert_floatfield_raw(self):
         ds = pp.clean_floatfield(self.ds.copy(deep=True))
+        ds = pp.clean_kept_coords(ds)
 
         cc_raw = cc.GxsmChannelConfig(name='Topo-Xp',
                                       conversion_factor=1.0,
@@ -60,6 +77,7 @@ class TestPreProcess:
 
     def test_convert_floatfield_physical(self):
         ds = pp.clean_floatfield(self.ds.copy(deep=True))
+        ds = pp.clean_kept_coords(ds)
 
         cc_physical = cc.GxsmChannelConfig(name='Topo-Xp',
                                            conversion_factor=2.0,
@@ -69,6 +87,7 @@ class TestPreProcess:
 
     def test_clean_up_metadata_default_data_vars(self):
         ds = pp.clean_floatfield(self.ds.copy(deep=True))
+        ds = pp.clean_kept_coords(ds)
 
         kept_vars = pp.GXSM_KEPT_DATA_VARS
         new_ds = pp.clean_up_metadata(ds)
@@ -76,13 +95,13 @@ class TestPreProcess:
 
     def test_clean_up_metadata_extra_data_var(self):
         ds = pp.clean_floatfield(self.ds.copy(deep=True))
+        ds = pp.clean_kept_coords(ds)
 
         added_vars = ['rangex']  # Should exist in any gxsm file
         kept_vars = pp.GXSM_KEPT_DATA_VARS + added_vars
         new_ds = pp.clean_up_metadata(ds, added_vars)
 
         assert_cleaned_metadata(ds, new_ds, kept_vars)
-
 
 #    def test_is_gxsm_file(self):
 #        # TODO: Need a non-gxsm nc file..

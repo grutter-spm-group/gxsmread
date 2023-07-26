@@ -37,7 +37,7 @@ def preprocess(ds: xarray.Dataset,
                simplify_metadata: bool,
                channels_config_dict: dict | None
                ) -> xarray.Dataset:
-    """Convert floatfield and (optionally) convert metadata.
+    """Convert floatfield and (optionally) simplify metadata.
 
     This is the top-level handler for preprocessing the gxsm dataset into our
     desired format.
@@ -70,6 +70,7 @@ def preprocess(ds: xarray.Dataset,
                                                 use_physical_units,
                                                 allow_convert_from_metadata)
     ds = clean_floatfield(ds)
+    ds = clean_kept_coords(ds)
     ds = convert_floatfield(ds, channel_config)
     if simplify_metadata:
         ds = clean_up_metadata(ds, [channel_config.name])
@@ -77,7 +78,7 @@ def preprocess(ds: xarray.Dataset,
 
 
 def clean_floatfield(ds: xarray.Dataset) -> xarray.Dataset:
-    """Remove suprious dimensions from FloatField array.
+    """Remove spurious dimensions from FloatField array.
 
     The main data array, 'FloatField', has 2 spurious dimensions: 'time' and
     'value'. This makes the array of the form [1,1,dimy,dimy,...]. This is
@@ -96,11 +97,7 @@ def clean_floatfield(ds: xarray.Dataset) -> xarray.Dataset:
     da = xarray.DataArray(
         data=ds[GXSM_DATA_VAR].data[0, 0, ...],
         dims=['dimy', 'dimx'],
-        coords=dict(
-            dimy=ds.dimy,
-            dimx=ds.dimx
-        )
-    )
+        coords={'dimy': ds.dimy, 'dimx': ds.dimx})
 
     ds[GXSM_DATA_VAR] = da
     return ds
@@ -159,6 +156,27 @@ def convert_floatfield(ds: xarray.Dataset, channel_config: cc.GxsmChannelConfig
     return ds
 
 
+def clean_kept_coords(ds: xarray.Dataset) -> xarray.Dataset:
+    """Update kept coords to be in nm and have 'units' attr.
+
+    Helper to ensure our spatial coordinate dimensions (GXSM_KEPT_DATA_COORDS)
+    are properly labeled and using SI units.
+
+    Args:
+        ds: xarray Dataset instance.
+
+    Returns:
+        xarray.Dataset instance, with GXSM_KEPT_DATA_COORDS converted to nm
+        and with a 'units' attr indicating as such.
+    """
+
+    for coord in GXSM_KEPT_COORDS:
+        # Convert kept coords to 'nm' and add metadata units
+        updated_coord = ds[coord] * cc.GXSM_TOPO_CONVERSION_FACTOR
+        updated_coord.attrs['units'] = cc.GXSM_TOPO_UNITS
+        ds[coord] = updated_coord
+    return ds
+
 def clean_up_metadata(ds: xarray.Dataset, saved_vars_list: list = []
                       ) -> xarray.Dataset:
     """Convert 'metadata' variables to attributes.
@@ -173,10 +191,13 @@ def clean_up_metadata(ds: xarray.Dataset, saved_vars_list: list = []
     metadata, we provide this method; it moves all metadata variables to
     attributes, and places them appropriately within the xarray.Dataset.
 
-    Note: This means that the units are removed! Since this appears standard in
+    This means that the units are removed! Since this appears standard in
     other microscopy files, we believe it to be ok. A user curious about the
     units is encouraged to open the file using xarray directly, or study any
     appropriate documentation.
+
+    Note that that we do not check vars in provided saved_vars_list for
+    'units' attrs. We assume this will be (or has been) done separately.
 
     Args:
         ds: the Dataset instance we are to convert, assumed to be from a gxsm
@@ -215,13 +236,6 @@ def clean_up_metadata(ds: xarray.Dataset, saved_vars_list: list = []
             new_attrs[var] = utils.extract_numpy_data(ds[var].values)
         else:
             kept_data_vars[var] = ds[var]
-
-    # Ensure our kept data vars have any unused dims removed
-    # for key, var in kept_data_vars.items():
-    #     for dim in var.dims:
-    #         if dim not in kept_dims:
-    #             var = var.drop_vars([dim])
-    #     kept_data_vars[key] = var
 
     full_attrs = {**ds.attrs, **new_attrs}
     new_ds = xarray.Dataset(data_vars=kept_data_vars, coords=kept_coords,
