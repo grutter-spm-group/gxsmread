@@ -95,7 +95,7 @@ to open a multi-channel file:
 ``` python
 from gxsmread import read
 [...]
-wildcard_path = 'path/to/files/*.nc*'
+wildcard_path = 'path/to/files/*.nc'
 ds = read.open_mfdataset(wildcard_path, channels_config_path,
                          use_physical_units=True,
                          simplify_metadata=True)
