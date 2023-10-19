@@ -15,7 +15,7 @@ def flip_x_axis_floatfield(ds: xr.Dataset):
 
 
 def test_open_dataset():
-    filename = "./tests/data/killburn_r17_LiNi_initial_scan042-M-Xp-Topo.nc"
+    filename = "./tests/data/chigwell009-M-Xp-Topo.nc"
     std_ds = xr.open_dataset(filename)
     read_ds = read.open_dataset(filename, channels_config_path=None,
                                 use_physical_units=True,
@@ -33,7 +33,7 @@ def test_open_dataset():
 
 def test_open_mfdataset():
     # Perform a glob for all files...
-    mf_filename = "./tests/data/multichannel_file/*.nc"
+    mf_filename = "./tests/data/chigwell009*.nc"
 
     mf_ds = read.open_mfdataset(mf_filename, channels_config_path=None,
                                 use_physical_units=False,

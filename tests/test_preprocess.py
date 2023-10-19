@@ -46,7 +46,7 @@ class TestPreProcess:
     # https://docs.pytest.org/en/7.4.x/getting-started.html
     # (look for 'Group multiple tests in a class')
     # For now, just making a local copy at the start of each test
-    filename = "./tests/data/killburn_r17_LiNi_initial_scan042-M-Xp-Topo.nc"
+    filename = "./tests/data/chigwell009-M-Xp-Topo.nc"
     ds = xr.open_dataset(filename)
 
 

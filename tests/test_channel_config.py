@@ -19,7 +19,7 @@ def assert_config(config: cc.GxsmChannelConfig,
 
 class TestTopography:
     # Special case of topography being the channel of interest
-    filename = "./tests/data/killburn_r17_LiNi_initial_scan042-M-Xp-Topo.nc"
+    filename = "./tests/data/chigwell009-M-Xp-Topo.nc"
     scan_direction = 'Xp'
     ds = xr.open_dataset(filename)
     file_attribs = fn.parse_gxsm_filename(filename)
@@ -69,7 +69,7 @@ class TestTopography:
 
 
 class TestSetName:
-    filename = "./tests/data/killburn_r17_LiNi_initial_scan041-Xp-ADC1.nc"
+    filename = "./tests/data/chigwell009-Xp-ADC1.nc"
     scan_direction = 'Xp'
     ds = xr.open_dataset(filename)
     file_attribs = fn.parse_gxsm_filename(filename)
@@ -93,7 +93,7 @@ class TestSetName:
 
 
 class TestPhysicalAndRaw:
-    filename = "./tests/data/killburn_r17_LiNi_initial_scan041-Xp-ADC1.nc"
+    filename = "./tests/data/chigwell009-Xp-ADC1.nc"
     scan_direction = 'Xp'
     ds = xr.open_dataset(filename)
     file_attribs = fn.parse_gxsm_filename(filename)
@@ -164,7 +164,7 @@ class TestPhysicalAndRaw:
 
 
 class TestPhysicalMetadata:
-    filename = "./tests/data/multichannel_file/r19_AuNP_LN084-Xm-ADC0mITunnel.nc"
+    filename = "./tests/data/r19_AuNP_LN158-Xp-ADC0mITunnel.nc"
     scan_direction = 'Xp'
     ds = xr.open_dataset(filename)
     file_attribs = fn.parse_gxsm_filename(filename)
