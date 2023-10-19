@@ -20,8 +20,6 @@ conversion_factor = 1.00
 units = "Hz"
 
 # Note: we will throw an error if the channel of interest does not contain
-# these 3 keys!
+# these 3 keys (and you are converting to physical units).
 #
 # And ... that's about it.
-
-# Create default_config.py, which holds the metadata-to-conversion info!
