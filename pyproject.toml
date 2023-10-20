@@ -8,21 +8,26 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.9"
-xarray = "^2023.6.0"
 toml = "^0.10.2"
 netcdf4 = "^1.6.4"
-
-
-[tool.poetry.group.parallel.dependencies]
-xarray = {extras = ["parallel"], version = "^2023.6.0"}
+xarray = "^2023.9.0"
 
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7.4.0"
 
 
+[tool.poetry.group.parallel.dependencies]
+xarray = {extras = ["parallel"], version = "^2023.9.0"}
+
+
+[tool.poetry.group.io.dependencies]
+xarray = {extras = ["io"], version = "^2023.9.0"}
+
+
 [tool.poetry.group.dev.dependencies]
 debugpy = "^1.6.7"
+
 
 [build-system]
 requires = ["poetry-core"]
