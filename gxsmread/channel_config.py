@@ -88,7 +88,7 @@ class GxsmChannelConfig:
 
 
 def CreateGxsmChannelConfig(channels_config_dict: dict | None,
-                            ds: xarray.Dataset,
+                            ds: xarray.Dataset | None,
                             file_attribs: fn.GxsmFileAttribs,
                             use_physical_units: bool,
                             allow_convert_from_metadata: bool
@@ -102,7 +102,9 @@ def CreateGxsmChannelConfig(channels_config_dict: dict | None,
             data (some subset of these attributes) for each channel of
             interest.
         ds: the Dataset instance associated with this channel, used to
-            extract metadata (if necessary)
+            extract metadata (if necessary). If None, we do not try to
+            use it when units are not provided (and physical units are
+            requested).
         file_attribs: Gxsm file attributes, for easy access to 'channel'
             name.
         use_physical_units: whether or not to record the data in physical
@@ -150,8 +152,8 @@ def CreateGxsmChannelConfig(channels_config_dict: dict | None,
             # Because of this, we *must* run this on the original ds
             # (we are grabbing metadata as data var, where we will be
             # turning it into an attr).
-            if allow_convert_from_metadata and c in MAP and \
-               MAP[c]['name'] in ds.data_vars:
+            if (allow_convert_from_metadata and c in MAP and
+               ds and MAP[c]['name'] in ds.data_vars):
                 conversion_factor = utils.extract_numpy_data(
                     ds[MAP[c]['name']].values)
                 units = MAP[c]['units']
