@@ -58,7 +58,7 @@ Note that Topography channels are a special case: we already have the informatio
 
 gxsmread depends on:
 - xarray, which is the main accessor and stores the data as N-D labeled arrays.
-- toml, to read the toml files.
+- tomli, to read the toml files.
 - netCDF4, to read the netCDF file format.
 - Python 3.9+.
 - (optionally) dask, for parallel loading.

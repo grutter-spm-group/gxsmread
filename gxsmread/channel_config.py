@@ -12,7 +12,7 @@ from the class documentation.
 """
 
 from dataclasses import dataclass
-import toml
+import tomli
 import xarray
 from . import utils
 from . import filename as fn
@@ -37,7 +37,7 @@ DEFAULT_CONVERSION_FACTOR = 1.0
 class GxsmChannelConfig:
     """Class holds the attribs to convert to 'physical' units.
 
-    You could argue this is overkill: toml.load() will already give us a
+    You could argue this is overkill: tomli.load() will already give us a
     multi-level dict! We mainly add this for 2 reasons:
         1. Encapsulate the config logic from elsewhere. We now have the
             'config' logic handled within here.
@@ -172,7 +172,7 @@ def CreateGxsmChannelConfig(channels_config_dict: dict | None,
 def load_channels_config_dict(filename: str | None) -> dict:
     """Load config dict (currently a toml file)."""
     if filename:
-        with open(filename, 'r') as f:
-            return toml.load(f)
+        with open(filename, 'rb') as f:
+            return tomli.load(f)
     else:
         return None
