@@ -169,13 +169,13 @@ def clean_kept_coords(ds: xarray.Dataset) -> xarray.Dataset:
         xarray.Dataset instance, with GXSM_KEPT_DATA_COORDS converted to nm
         and with a 'units' attr indicating as such.
     """
-
     for coord in GXSM_KEPT_COORDS:
         # Convert kept coords to 'nm' and add metadata units
         updated_coord = ds[coord] * cc.GXSM_TOPO_CONVERSION_FACTOR
         updated_coord.attrs['units'] = cc.GXSM_TOPO_UNITS
         ds[coord] = updated_coord
     return ds
+
 
 def clean_up_metadata(ds: xarray.Dataset, saved_vars_list: list = []
                       ) -> xarray.Dataset:

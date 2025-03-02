@@ -49,7 +49,6 @@ class TestPreProcess:
     filename = "./tests/data/chigwell009-M-Xp-Topo.nc"
     ds = xr.open_dataset(filename)
 
-
     def test_clean_floatfield(self):
         ds = self.ds
         new_ds = pp.clean_floatfield(ds.copy(deep=True))
