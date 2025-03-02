@@ -15,10 +15,12 @@ Basic usage:
 """
 
 import xarray
+import pandas as pd
 from pathlib import Path
 from functools import partial
 from . import channel_config as cc
 from . import preprocess as pp
+from . import spec
 
 
 def open_mfdataset(paths: str | list[str | Path],
@@ -143,3 +145,53 @@ def open_dataset(filename_or_obj: str | Path,
                          allow_convert_from_metadata=allow_convert_from_metadata,
                          simplify_metadata=simplify_metadata,
                          channels_config_dict=channels_config_dict)
+
+
+def open_spec(filename: str | Path) -> pd.DataFrame:
+    """Open and decode spec data from a file or file object.
+
+    Reads gxsm 'VP' style spectroscopy files (Vector Probe), converting them to
+    a DataFrame. These spectroscopy files are tabular data, meaning we have
+    N data rows of M columns (corresponding to various channels recorded),
+    and thus an NxM array.
+
+    A file also has a 'header' of various metadata attributes, written in a
+    key/subkey format:
+    # KEY :: SUB_KEY1=... SUB_KEY2=...
+
+    This method will extract the keys as independent attributes, with the full
+    val string (consisting of various sub keys) stored as a metadata element.
+    However, we make an exception for 4 metadata attributes we deem  worth
+    expliciting: x and y coordinates where the spectroscopy was collected,
+    the filename, and the data of the collection.
+
+    Args:
+        filename: path of the file to open, can be given as a string
+            or a pathlib Path.
+
+    Returns:
+        A pandas.DataFrame instance, with the file's data stored with channels
+        explicited and units as an attr in each Series' attr instance.
+    """
+    raw_metadata = {}
+    data = None
+    names = None
+    units = None
+    with open(filename, 'r') as file:
+        lines = file.readlines()
+        spec.validate_spec_file(lines)
+        raw_metadata = spec.extract_raw_metadata(lines)
+        names, units, data = spec.extract_data(lines)
+
+    new_metadata = spec.parse_useful_metadata(raw_metadata)
+    metadata = raw_metadata | new_metadata
+
+    df = pd.DataFrame(data, columns=names)
+    for k, v in metadata.items():
+        df.attrs[k] = v
+
+    # Add units with UNITS_KEY as dict to attributes.
+    units_dict = dict(zip(names, units))
+    df.attrs[spec.KEY_UNITS] = units_dict
+
+    return df

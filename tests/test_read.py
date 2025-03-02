@@ -1,6 +1,9 @@
+import pytest
+import numpy as np
 import xarray as xr
 import glob
 import gxsmread.read as read
+import gxsmread.spec as spec
 import gxsmread.channel_config as cc
 import gxsmread.preprocess as pp
 import gxsmread.filename as fn
@@ -69,3 +72,32 @@ def test_open_mfdataset():
             tpp.assert_cleaned_metadata(std_ds, mf_ds,
                                         unique_channel_names,
                                         old_vars_removed)
+
+
+@pytest.fixture
+def units_dict():
+    return {'Index': '', 'ADC0-I': 'nA', 'ADC7': 'V', 'Zmon': 'Å', 'ZS': 'Å',
+            'Block-Start-Index': ''}
+
+
+@pytest.fixture
+def names():
+    # Note: our 'units' is made from a dict, so repeats are not duplicated.
+    return ['Index', 'ADC0-I', 'ADC7', 'ADC0-I', 'ADC7', 'Zmon', 'ZS',
+            'Block-Start-Index']
+
+
+@pytest.fixture
+def first_row_data():
+    return [0, -2.762535436602e+01, -2.738731040376e+00, -2.762535436602e+01,
+            -2.738731040376e+00, 3.850349997714e+03, 3.850349997714e+03,
+            0.000000000000e+00]
+
+
+def test_open_spec(units_dict, names, first_row_data):
+    spec_filename = './tests/data/test007-VP003-VP.vpdata'
+    spec_df = read.open_spec(spec_filename)
+
+    assert (spec_df.columns.to_numpy() == names).all()
+    assert spec_df.attrs[spec.KEY_UNITS] == units_dict
+    assert np.allclose(spec_df[0:1].to_numpy(), np.array(first_row_data))
