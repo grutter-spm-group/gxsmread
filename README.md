@@ -48,17 +48,14 @@ contains the following structure:
 terminal command.
 2. Metadata: from the 2nd line up until the first '#C ' line, metadata 
 attributes are indicadted in the format:
-
-```text
-METADATA_KEY :: SUBKEY1=[...] SUBKEY2=[...]
-```
+`$metadata_key$` :: `$subkey1$`=[...] `$subkey2$`=[...]
 
 3. Channel Map Data: all of the potential save channels are indicated in a
 tabular format, containing useful information about them (e.g. units).
 4. Data: the saved data for the various *chosen* channels is stored in a
 tabular format. The first line of this section contains the column names. All
-remaining lines are tab-separated ('\t') data rows. This section begins with 
-'#C Data Table' and ends with '#C END.'.
+remaining lines are tab-separated (`\t`) data rows. This section begins with 
+`#C Data Table` and ends with `#C END.`.
 5. Vector Probe Header list: an additional set of tabular data containing
 additional information. I am not certain of the purpose of this.
 
@@ -96,7 +93,7 @@ DataFrame instance:
 dict with key 'units'. This consists of key:val pairs containing 
 CHANNEL_NAME:UNIT.
 - All raw metadata, stored in the DataFrame 'attrs' attribute. We store each
-METADATA_KEY:STRING_CONTAINING_SUBKEYS as a key:val p air in 'attrs'.
+`$metadata_key$:$string_containing_subkeys$` as a key:val pair in 'attrs'.
 - A small number of desired metadata is further extracted from the subkeys.
 See read:open_spec() for more info.
 
