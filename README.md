@@ -125,12 +125,12 @@ poetry install
 To open a single .nc file:
 
 ``` python
-from gxsmread import read
+import gxsmread
 [...]
 path_to_file = '/path/to/file/with_filename.nc'
-ds = read.open_dataset(path_to_file, channels_config_path,
-                       use_physical_units=True,
-                       simplify_metadata=True)
+ds = gxsmread.open_dataset(path_to_file, channels_config_path,
+                           use_physical_units=True,
+                           simplify_metadata=True)
 [...]
 
 ```
@@ -138,26 +138,26 @@ ds = read.open_dataset(path_to_file, channels_config_path,
 to open a multi-channel file:
 
 ``` python
-from gxsmread import read
+import gxsmread
 [...]
 wildcard_path = 'path/to/files/*.nc'
-ds = read.open_mfdataset(wildcard_path, channels_config_path,
-                         use_physical_units=True,
-                         simplify_metadata=True)
+ds = gxsmread.open_mfdataset(wildcard_path, channels_config_path,
+                             use_physical_units=True,
+                             simplify_metadata=True)
 [...]
 ```
 
-Note that open_mfdataset() support multi-threaded loading via dask by using the parameter parallel=True. gxsmread's method is a wrapper, and therefore does too.
+Note that open_mfdataset() supports multi-threaded loading via dask by using the parameter parallel=True. gxsmread's method is a wrapper, and therefore does too.
 
 ### Reading Spectroscopy files
 
 To open a single spectroscopy .vpdata file:
 
 ``` python
-from gxsmread import read
+import gxsmread
 [...]
 path_to_file = '/path/to/file/with_filename.vpdata'
-df = read.open_spec(path_to_file)
+df = gxsmread.open_spec(path_to_file)
 [...]
 
 ```
