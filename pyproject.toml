@@ -2,10 +2,24 @@
 name = "gxsmread"
 version = "0.2.0"
 description = "Read gxsm data files"
-authors = ["Nick Sullivan <nsulmol@gmail.com>"]
-license = "GPL"
+authors = [{ name = "Nick Sullivan Molina", email =  "nsulmol@gmail.com" }]
+maintainers = [{ name = "Nick Sullivan Molina", email =  "nsulmol@gmail.com" }]
+license = { text = "GPL-2.0-only" }
+
 readme = "README.md"
 packages = [{include = "gxsmread"}]
+
+classifiers = [
+  "Development Status :: 3 - Alpha",
+
+  "Intended Audience :: Developers",
+  "Topic :: Software Development :: Build Tools",
+
+  "Programming Language :: Python :: 3",
+
+  "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
+  "Operating System :: OS Independent",
+]
 
 [tool.poetry.dependencies]
 python = ">=3.9"
@@ -33,3 +47,8 @@ debugpy = "^1.6.7"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+
+[project.urls]
+Homepage = "https://github.com/grutter-spm-group/gxsmread"
+Repository = "https://github.com/grutter-spm-group/gxsmread.git"
