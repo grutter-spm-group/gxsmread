@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gxsmread"
-version = "0.2.1"
+version = "0.2.2"
 description = "Read gxsm data files"
 authors = ["Nick Sullivan Molina <nsulmol@gmail.com>"]
 maintainers = ["Nick Sullivan Molina <nsulmol@gmail.com>"]
