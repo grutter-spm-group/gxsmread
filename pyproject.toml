@@ -1,10 +1,10 @@
 [tool.poetry]
 name = "gxsmread"
-version = "0.2.0"
+version = "0.2.1"
 description = "Read gxsm data files"
-authors = [{ name = "Nick Sullivan Molina", email =  "nsulmol@gmail.com" }]
-maintainers = [{ name = "Nick Sullivan Molina", email =  "nsulmol@gmail.com" }]
-license = { text = "GPL-2.0-only" }
+authors = ["Nick Sullivan Molina <nsulmol@gmail.com>"]
+maintainers = ["Nick Sullivan Molina <nsulmol@gmail.com>"]
+license = "GPL-2.0-only"
 
 readme = "README.md"
 packages = [{include = "gxsmread"}]
