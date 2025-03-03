@@ -1,10 +1,11 @@
 [tool.poetry]
 name = "gxsmread"
-version = "0.1.0"
+version = "0.2.0"
 description = "Read gxsm data files"
 authors = ["Nick Sullivan <nsulmol@gmail.com>"]
-license = "MIT"
+license = "GPL"
 readme = "README.md"
+packages = [{include = "gxsmread"}]
 
 [tool.poetry.dependencies]
 python = ">=3.9"
